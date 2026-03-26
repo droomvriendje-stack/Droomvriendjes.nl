@@ -150,21 +150,24 @@ const AdminDashboardPage = () => {
               <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1" data-testid="date-filter">
                 <Filter className="w-4 h-4 text-gray-500 ml-2" />
                 {[
-                  { days: 1, label: 'Vandaag' },
-                  { days: 7, label: '7 dagen' },
-                  { days: 30, label: '30 dagen' },
-                  { days: 90, label: '90 dagen' },
-                  { days: 0, label: 'Alles' }
-                ].map(({ days, label }) => (
+                  { days: 1, label: 'Vandaag', icon: '📅' },
+                  { days: 7, label: '7 dagen', icon: '📊' },
+                  { days: 30, label: '30 dagen', icon: '📈' },
+                  { days: 90, label: '3 maanden', icon: '📉' },
+                  { days: 180, label: '6 maanden', icon: '📋' },
+                  { days: 365, label: '1 jaar', icon: '🗓️' },
+                  { days: 0, label: 'Alles', icon: '∞' }
+                ].map(({ days, label, icon }) => (
                   <button
                     key={days}
                     onClick={() => setSelectedDays(days)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
                       selectedDays === days 
                         ? 'bg-white text-purple-600 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
+                    <span>{icon}</span>
                     {label}
                   </button>
                 ))}
