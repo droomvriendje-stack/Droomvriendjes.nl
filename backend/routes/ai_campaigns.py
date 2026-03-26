@@ -1,39 +1,47 @@
 """
 AI Marketing Campaign Creator
-Auto-generates and posts content to Facebook, Instagram, TikTok
+Generates content via Emergent LLM Key (OpenAI GPT)
+Supports posting to TikTok, Facebook, Instagram (copy-friendly)
 """
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 import logging
 import os
 import json
 import httpx
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ai-campaigns"])
 
-# API Keys will be loaded from environment
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-FACEBOOK_ACCESS_TOKEN = os.environ.get("FACEBOOK_ACCESS_TOKEN", "")
-INSTAGRAM_ACCESS_TOKEN = os.environ.get("INSTAGRAM_ACCESS_TOKEN", "")
-TIKTOK_ACCESS_TOKEN = os.environ.get("TIKTOK_ACCESS_TOKEN", "")
+# Supabase client
+supabase = None
 
-# Platform IDs
-FACEBOOK_PAGE_ID = os.environ.get("FACEBOOK_PAGE_ID", "")
-INSTAGRAM_ACCOUNT_ID = os.environ.get("INSTAGRAM_ACCOUNT_ID", "")
-TIKTOK_ACCOUNT_ID = os.environ.get("TIKTOK_ACCOUNT_ID", "")
+
+def set_supabase_client(client):
+    global supabase
+    supabase = client
+
+
+# TikTok config
+TIKTOK_CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY", "")
+TIKTOK_CLIENT_SECRET = os.environ.get("TIKTOK_CLIENT_SECRET", "")
 
 
 class CampaignRequest(BaseModel):
     product_name: str
     product_description: str
-    target_audience: str = "Ouders met baby's"
+    target_audience: str = "Ouders met baby's en peuters"
     platforms: List[str] = ["facebook", "instagram", "tiktok"]
-    campaign_goal: str = "sales"  # or 'awareness', 'engagement'
-    tone: str = "warm"  # or 'professional', 'casual', 'playful'
+    campaign_goal: str = "sales"
+    tone: str = "warm"
+    language: str = "nl"
     image_url: Optional[str] = None
 
 
@@ -41,260 +49,219 @@ class CampaignResponse(BaseModel):
     campaign_id: str
     status: str
     generated_content: dict
-    scheduled_posts: List[dict]
+    post_results: List[dict]
 
 
-async def generate_ai_content(product_name: str, product_description: str, platform: str, tone: str) -> dict:
-    """
-    Generate marketing content using OpenAI GPT
-    """
-    if not OPENAI_API_KEY:
-        logger.warning("OpenAI API key not configured, using fallback content")
-        return {
-            'caption': f"✨ Ontdek {product_name}! {product_description} 🌟",
-            'hashtags': '#droomvriendjes #baby #slaapknuffel #newborn',
-            'cta': 'Shop nu op droomvriendjes.nl'
-        }
-    
+async def generate_ai_content(product_name: str, product_description: str, platform: str, tone: str, goal: str, audience: str) -> dict:
+    """Generate marketing content using Emergent LLM Key (OpenAI GPT)"""
     try:
-        # Platform-specific prompts
-        prompts = {
-            'facebook': f"""Schrijf een engagerende Facebook post voor {product_name}. 
-                        Product: {product_description}
-                        Tone: {tone}
-                        Doelgroep: Ouders met baby's
-                        Inclusief emoji's en call-to-action. Max 200 woorden.""",
-            
-            'instagram': f"""Schrijf een Instagram caption voor {product_name}.
-                          Product: {product_description}
-                          Tone: {tone}
-                          Inclusief relevante hashtags (#droomvriendjes #baby #slaapknuffel)
-                          Max 150 woorden, visueel aantrekkelijk.""",
-            
-            'tiktok': f"""Schrijf een korte, pakkende TikTok beschrijving voor {product_name}.
-                       Product: {product_description}
-                       Tone: {tone}
-                       Kort, trending, met hashtags. Max 100 woorden."""
-        }
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "gpt-4",
-                    "messages": [
-                        {"role": "system", "content": "Je bent een marketing expert voor baby producten in Nederland."},
-                        {"role": "user", "content": prompts.get(platform, prompts['facebook'])}
-                    ],
-                    "max_tokens": 300,
-                    "temperature": 0.7
-                },
-                timeout=30.0
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                content = result['choices'][0]['message']['content']
-                
-                # Parse content
-                lines = content.split('\n')
-                caption = '\n'.join([l for l in lines if not l.startswith('#')])
-                hashtags = ' '.join([l for l in lines if l.startswith('#')])
-                
-                return {
-                    'caption': caption.strip(),
-                    'hashtags': hashtags.strip() if hashtags else '#droomvriendjes #baby #slaapknuffel',
-                    'cta': 'Shop nu op droomvriendjes.nl',
-                    'full_text': content
-                }
-            else:
-                logger.error(f"OpenAI API error: {response.status_code}")
-                raise Exception("AI content generation failed")
-                
-    except Exception as e:
-        logger.error(f"Content generation error: {e}")
-        # Fallback
-        return {
-            'caption': f"✨ Ontdek {product_name}!\n\n{product_description}\n\n🌙 Perfect voor een rustgevende nacht",
-            'hashtags': '#droomvriendjes #baby #slaapknuffel #newborn #babyslaap',
-            'cta': 'Bestel nu op droomvriendjes.nl 🛍️'
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+        api_key = os.environ.get("EMERGENT_LLM_KEY", "")
+        if not api_key:
+            logger.warning("EMERGENT_LLM_KEY not set, using fallback")
+            return _fallback_content(product_name, product_description, platform)
+
+        session_id = f"campaign_{platform}_{uuid.uuid4().hex[:8]}"
+
+        system_msg = (
+            "Je bent een creatieve social media marketing expert gespecialiseerd in "
+            "baby- en kinderproducten in Nederland en Belgie. Je schrijft altijd in het Nederlands. "
+            "Je content is warm, betrouwbaar en moedervriendelijk. "
+            "Je weet hoe je ouders emotioneel raakt en tot actie aanzet."
+        )
+
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=session_id,
+            system_message=system_msg
+        )
+        chat.with_model("openai", "gpt-4o")
+
+        platform_instructions = {
+            "facebook": f"""Schrijf een Facebook advertentie/post voor "{product_name}".
+
+Product: {product_description}
+Toon: {tone} en betrouwbaar
+Doel: {goal}
+Doelgroep: {audience}
+
+Geef het resultaat in EXACT dit JSON format (geen extra tekst):
+{{
+  "headline": "Korte pakkende headline (max 40 tekens)",
+  "caption": "De volledige post tekst met emoji's (max 250 woorden)",
+  "hashtags": "#relevante #hashtags #gescheiden #door #spaties",
+  "cta": "Call-to-action tekst"
+}}""",
+            "instagram": f"""Schrijf een Instagram post/reel caption voor "{product_name}".
+
+Product: {product_description}
+Toon: {tone} en visueel aantrekkelijk
+Doel: {goal}
+Doelgroep: {audience}
+
+Geef het resultaat in EXACT dit JSON format (geen extra tekst):
+{{
+  "headline": "Eerste regel die opvalt (max 50 tekens)",
+  "caption": "Instagram caption met emoji's, line breaks en storytelling (max 200 woorden)",
+  "hashtags": "#30 #relevante #hashtags #voor #bereik",
+  "cta": "Call-to-action tekst"
+}}""",
+            "tiktok": f"""Schrijf een TikTok video beschrijving voor "{product_name}".
+
+Product: {product_description}
+Toon: {tone}, trending en jong
+Doel: {goal}
+Doelgroep: {audience}
+
+Geef het resultaat in EXACT dit JSON format (geen extra tekst):
+{{
+  "headline": "Hook voor de eerste 3 seconden (max 30 tekens)",
+  "caption": "Korte pakkende TikTok beschrijving (max 80 woorden)",
+  "hashtags": "#trending #tiktok #hashtags",
+  "cta": "Call-to-action"
+}}"""
         }
 
+        prompt = platform_instructions.get(platform, platform_instructions["facebook"])
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
 
-async def post_to_facebook(content: dict, image_url: str = None) -> dict:
-    """
-    Post to Facebook Page
-    """
-    if not FACEBOOK_ACCESS_TOKEN or not FACEBOOK_PAGE_ID:
-        return {'status': 'skipped', 'reason': 'No Facebook credentials configured'}
-    
-    try:
-        full_message = f"{content['caption']}\n\n{content['hashtags']}\n\n{content['cta']}"
-        
-        async with httpx.AsyncClient() as client:
-            payload = {
-                'message': full_message,
-                'access_token': FACEBOOK_ACCESS_TOKEN
+        try:
+            clean = response.strip()
+            if clean.startswith("```"):
+                clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+                if clean.endswith("```"):
+                    clean = clean[:-3]
+                clean = clean.strip()
+            if clean.startswith("json"):
+                clean = clean[4:].strip()
+            parsed = json.loads(clean)
+            return parsed
+        except (json.JSONDecodeError, Exception) as e:
+            logger.warning(f"Could not parse AI response as JSON: {e}")
+            return {
+                "headline": product_name,
+                "caption": response[:500],
+                "hashtags": "#droomvriendjes #slaapknuffel #baby",
+                "cta": "Shop nu op droomvriendjes.nl"
             }
-            
-            if image_url:
-                payload['link'] = image_url
-            
-            response = await client.post(
-                f"https://graph.facebook.com/v18.0/{FACEBOOK_PAGE_ID}/feed",
-                data=payload,
-                timeout=30.0
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return {
-                    'status': 'success',
-                    'platform': 'facebook',
-                    'post_id': result.get('id'),
-                    'url': f"https://facebook.com/{result.get('id')}"
-                }
-            else:
-                return {'status': 'failed', 'error': response.text}
-                
+
     except Exception as e:
-        logger.error(f"Facebook post error: {e}")
-        return {'status': 'error', 'message': str(e)}
+        logger.error(f"AI content generation error: {e}")
+        return _fallback_content(product_name, product_description, platform)
 
 
-async def post_to_instagram(content: dict, image_url: str = None) -> dict:
-    """
-    Post to Instagram Business Account
-    """
-    if not INSTAGRAM_ACCESS_TOKEN or not INSTAGRAM_ACCOUNT_ID:
-        return {'status': 'skipped', 'reason': 'No Instagram credentials configured'}
-    
-    try:
-        caption_text = f"{content['caption']}\n\n{content['hashtags']}\n\n{content['cta']}"
-        
-        async with httpx.AsyncClient() as client:
-            # Step 1: Create container
-            container_payload = {
-                'image_url': image_url or 'https://droomvriendjes.nl/products/lion-main.png',
-                'caption': caption_text,
-                'access_token': INSTAGRAM_ACCESS_TOKEN
-            }
-            
-            container_response = await client.post(
-                f"https://graph.facebook.com/v18.0/{INSTAGRAM_ACCOUNT_ID}/media",
-                data=container_payload,
-                timeout=30.0
-            )
-            
-            if container_response.status_code == 200:
-                container_id = container_response.json().get('id')
-                
-                # Step 2: Publish container
-                publish_payload = {
-                    'creation_id': container_id,
-                    'access_token': INSTAGRAM_ACCESS_TOKEN
-                }
-                
-                publish_response = await client.post(
-                    f"https://graph.facebook.com/v18.0/{INSTAGRAM_ACCOUNT_ID}/media_publish",
-                    data=publish_payload,
-                    timeout=30.0
-                )
-                
-                if publish_response.status_code == 200:
-                    result = publish_response.json()
-                    return {
-                        'status': 'success',
-                        'platform': 'instagram',
-                        'post_id': result.get('id'),
-                        'url': f"https://instagram.com/p/{result.get('id')}"
-                    }
-            
-            return {'status': 'failed', 'error': container_response.text}
-                
-    except Exception as e:
-        logger.error(f"Instagram post error: {e}")
-        return {'status': 'error', 'message': str(e)}
-
-
-async def post_to_tiktok(content: dict, video_url: str = None) -> dict:
-    """
-    Post to TikTok (Note: TikTok requires video content)
-    """
-    if not TIKTOK_ACCESS_TOKEN or not TIKTOK_ACCOUNT_ID:
-        return {'status': 'skipped', 'reason': 'No TikTok credentials configured'}
-    
-    # TikTok API is more complex and requires video upload
-    # For now, return scheduled status
+def _fallback_content(product_name, product_description, platform):
+    """Fallback content when AI is unavailable"""
     return {
-        'status': 'scheduled',
-        'platform': 'tiktok',
-        'message': 'TikTok posting requires video content. Please upload manually with generated caption.',
-        'caption': f"{content['caption']}\n\n{content['hashtags']}"
+        "headline": f"Ontdek {product_name}!",
+        "caption": f"Maak kennis met {product_name} van Droomvriendjes!\n\n{product_description}\n\nPerfect voor een rustgevende nacht voor jouw kleintje.",
+        "hashtags": "#droomvriendjes #slaapknuffel #baby #nachtlampje #kraamcadeau",
+        "cta": "Bestel nu op droomvriendjes.nl"
     }
 
 
-@router.post("/api/ai-campaigns/create", response_model=CampaignResponse)
-async def create_ai_campaign(request: CampaignRequest, background_tasks: BackgroundTasks):
-    """
-    Create and auto-post AI-generated marketing campaign
-    """
+@router.post("/api/ai-campaigns/generate")
+async def generate_campaign(request: CampaignRequest):
+    """Generate AI marketing campaign content for multiple platforms"""
     try:
-        campaign_id = f"camp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        campaign_id = f"camp_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
         generated_content = {}
-        scheduled_posts = []
-        
-        # Generate content for each platform
+        post_results = []
+
         for platform in request.platforms:
-            logger.info(f"Generating content for {platform}")
-            
+            logger.info(f"Generating {platform} content for: {request.product_name}")
             content = await generate_ai_content(
                 request.product_name,
                 request.product_description,
                 platform,
-                request.tone
+                request.tone,
+                request.campaign_goal,
+                request.target_audience
             )
-            
             generated_content[platform] = content
-            
-            # Auto-post based on platform
-            if platform == 'facebook':
-                result = await post_to_facebook(content, request.image_url)
-                scheduled_posts.append(result)
-            
-            elif platform == 'instagram':
-                result = await post_to_instagram(content, request.image_url)
-                scheduled_posts.append(result)
-            
-            elif platform == 'tiktok':
-                result = await post_to_tiktok(content)
-                scheduled_posts.append(result)
-        
-        return CampaignResponse(
-            campaign_id=campaign_id,
-            status='completed',
-            generated_content=generated_content,
-            scheduled_posts=scheduled_posts
-        )
-        
+
+            post_results.append({
+                "platform": platform,
+                "status": "generated",
+                "content": content
+            })
+
+        # Save campaign to Supabase if available
+        if supabase:
+            try:
+                supabase.table("marketing_campaigns").insert({
+                    "campaign_id": campaign_id,
+                    "product_name": request.product_name,
+                    "platforms": request.platforms,
+                    "content": json.dumps(generated_content),
+                    "status": "generated",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }).execute()
+            except Exception as e:
+                logger.warning(f"Could not save campaign to DB: {e}")
+
+        return {
+            "campaign_id": campaign_id,
+            "status": "generated",
+            "generated_content": generated_content,
+            "post_results": post_results
+        }
+
     except Exception as e:
-        logger.error(f"Campaign creation error: {e}")
+        logger.error(f"Campaign generation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/ai-campaigns/history")
+async def get_campaign_history():
+    """Get previous campaigns"""
+    if not supabase:
+        return {"campaigns": []}
+
+    try:
+        result = supabase.table("marketing_campaigns")\
+            .select("*")\
+            .order("created_at", desc=True)\
+            .limit(20)\
+            .execute()
+        campaigns = result.data or []
+        for c in campaigns:
+            if isinstance(c.get("content"), str):
+                try:
+                    c["content"] = json.loads(c["content"])
+                except:
+                    pass
+        return {"campaigns": campaigns}
+    except Exception as e:
+        logger.warning(f"Could not fetch campaigns: {e}")
+        return {"campaigns": []}
+
+
+@router.get("/api/ai-campaigns/products")
+async def get_products_for_campaigns():
+    """Get available products for campaign generation"""
+    if not supabase:
+        return {"products": []}
+
+    try:
+        result = supabase.table("products")\
+            .select("id, name, description, price, image")\
+            .execute()
+        return {"products": result.data or []}
+    except Exception as e:
+        logger.warning(f"Could not fetch products: {e}")
+        return {"products": []}
 
 
 @router.get("/api/ai-campaigns/config-status")
 async def get_config_status():
-    """
-    Check which platforms are configured
-    """
+    """Check which integrations are configured"""
     return {
-        'openai': bool(OPENAI_API_KEY),
-        'facebook': bool(FACEBOOK_ACCESS_TOKEN and FACEBOOK_PAGE_ID),
-        'instagram': bool(INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_ACCOUNT_ID),
-        'tiktok': bool(TIKTOK_ACCESS_TOKEN and TIKTOK_ACCOUNT_ID),
-        'ready': bool(OPENAI_API_KEY)
+        "ai_ready": bool(os.environ.get("EMERGENT_LLM_KEY")),
+        "tiktok_configured": bool(TIKTOK_CLIENT_KEY and TIKTOK_CLIENT_SECRET),
+        "facebook_configured": False,
+        "instagram_configured": False,
+        "supabase_connected": supabase is not None
     }

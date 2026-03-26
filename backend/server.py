@@ -240,6 +240,10 @@ app.include_router(marketing_route.router)
 app.include_router(dashboard_analytics_route.router)
 dashboard_analytics_route.set_supabase_client(supabase_client)
 
+# AI Campaigns
+app.include_router(ai_campaigns_route.router)
+ai_campaigns_route.set_supabase_client(supabase_client)
+
 # Database Info
 app.include_router(database_info_route.router)
 
