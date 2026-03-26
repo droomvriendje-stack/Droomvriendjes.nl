@@ -199,7 +199,7 @@ const AdminDashboardPage = () => {
             {stats?.revenue_growth !== undefined && stats.revenue_growth !== 0 && (
               <span className={`ml-2 flex items-center gap-1 ${getGrowthColor(stats.revenue_growth)}`}>
                 {stats.revenue_growth > 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                {stats.revenue_growth > 0 ? '+' : ''}{stats.revenue_growth}% vs vorige periode
+                {stats.revenue_growth > 0 ? '+' : ''}{stats?.revenue_growth || 0}% vs vorige periode
               </span>
             )}
           </div>
