@@ -1028,16 +1028,26 @@ const EmailTemplatesAdmin = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-3 border-t">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(template)} className="flex-1">
-                      <Edit2 className="w-3 h-3 mr-1" />
-                      Bewerken
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDuplicate(template.id)}>
-                      <Copy className="w-3 h-3" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(template.id)} className="text-red-600 hover:bg-red-50">
-                      <Trash2 className="w-3 h-3" />
+                  <div className="space-y-2 pt-3 border-t">
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(template)} className="flex-1">
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Bewerken
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDuplicate(template.id)}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(template.id)} className="text-red-600 hover:bg-red-50">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => sendToCustomers(template.id)} 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Send className="w-3 h-3 mr-1" />
+                      Verzend Nu
                     </Button>
                   </div>
                 </div>
