@@ -5,6 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "./context/CartContext";
 import { ProductsProvider } from "./context/ProductsContext";
 import { AdminAuthProvider, ProtectedAdminRoute } from "./context/AdminAuthContext";
+import WhatsAppButton from "./components/WhatsAppButton";
 import HomePage from "./pages/HomePage";
 import ProductPage from "./pages/ProductPage";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -173,6 +174,7 @@ function App() {
               <Route path="/admin/ai-campaigns" element={<ProtectedAdminRoute><AICampaignMakerPage /></ProtectedAdminRoute>} />
             </Routes>
             <Toaster />
+            <WhatsAppButton />
           </AdminAuthProvider>
         </BrowserRouter>
       </CartProvider>
