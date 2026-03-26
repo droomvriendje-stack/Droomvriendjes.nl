@@ -37,7 +37,7 @@ const AdminDashboardPage = () => {
     const token = localStorage.getItem('admin_token');
     
     try {
-      const response = await fetch(`/api/admin/dashboard?days=${days}`, {
+      const response = await fetch(`${API_URL}/api/admin/dashboard?days=${days}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -51,6 +51,8 @@ const AdminDashboardPage = () => {
         setAbandonedCarts(data.abandoned_carts || []);
         setRecentOrders(data.recent_orders || []);
         setTopCustomers(data.top_customers || []);
+      } else {
+        console.error('Dashboard API error:', response.status);
       }
     } catch (error) {
       console.error('Error fetching dashboard:', error);
