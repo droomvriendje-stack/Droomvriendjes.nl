@@ -39,6 +39,7 @@ const AdminCommandCenterNew = () => {
   const [liveEvents, setLiveEvents] = useState([]);
   const [newOrderFlash, setNewOrderFlash] = useState(false);
   const [funnelData, setFunnelData] = useState([]);
+  const [emailStats, setEmailStats] = useState({ total_emails: 0, sent: 0, failed: 0, by_type: {}, recent: [] });
 
   // Update clock
   useEffect(() => {
@@ -156,6 +157,15 @@ const AdminCommandCenterNew = () => {
       if (funnelRes.ok) {
         const fData = await funnelRes.json();
         setFunnelData(fData.funnel || []);
+      }
+
+      // Fetch email stats
+      const emailRes = await fetch(`/api/email-logs/stats?days=30`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (emailRes.ok) {
+        const eData = await emailRes.json();
+        setEmailStats(eData);
       }
     } catch (error) {
       console.error('Error fetching dashboard:', error);
@@ -617,6 +627,55 @@ const AdminCommandCenterNew = () => {
                         <div className="text-white text-xs">Piek: 20:00–22:00 — optimaliseer email timing</div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Email Stats Widget */}
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-violet-500/30 transition-all cursor-pointer" onClick={() => navigate('/admin/email-logs')}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Verzonden E-mails
+                    </h3>
+                    <span className="text-xs text-white/30">Laatste 30 dagen</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-black text-white">{emailStats.total_emails || 0}</div>
+                      <div className="text-white/40 text-xs">Totaal</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-black text-emerald-400">{emailStats.sent || 0}</div>
+                      <div className="text-white/40 text-xs">Verzonden</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-black text-red-400">{emailStats.failed || 0}</div>
+                      <div className="text-white/40 text-xs">Mislukt</div>
+                    </div>
+                  </div>
+                  {emailStats.by_type && Object.keys(emailStats.by_type).length > 0 && (
+                    <div className="space-y-2">
+                      {Object.entries(emailStats.by_type).slice(0, 4).map(([type, count]) => {
+                        const typeLabels = {
+                          order_confirmation: { label: 'Bevestiging', emoji: '📦' },
+                          review_request: { label: 'Review', emoji: '⭐' },
+                          checkout_started: { label: 'Checkout', emoji: '🛒' },
+                          marketing: { label: 'Marketing', emoji: '📣' },
+                          contact_form: { label: 'Contact', emoji: '📬' },
+                          payment_success: { label: 'Betaald', emoji: '✅' },
+                          test: { label: 'Test', emoji: '🧪' },
+                        };
+                        const config = typeLabels[type] || { label: type, emoji: '📧' };
+                        return (
+                          <div key={type} className="flex items-center justify-between text-xs">
+                            <span className="text-white/60">{config.emoji} {config.label}</span>
+                            <span className="text-white font-medium">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="mt-4 pt-3 border-t border-white/10 text-center">
+                    <span className="text-violet-400 text-xs font-medium hover:text-violet-300">Bekijk alle e-mails →</span>
                   </div>
                 </div>
               </div>

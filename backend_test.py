@@ -451,6 +451,112 @@ class DroomvriendjesAPITester:
             error = response.text if response else "Request failed"
             self.log_result("Create Order with Discounts", False, "Failed to create order", error)
     
+    def test_email_logs_apis(self):
+        """Test Email Logs API endpoints"""
+        print("\n=== TESTING EMAIL LOGS APIs ===")
+        
+        # 1. Test GET /api/email-logs/ - Get email logs with parameters
+        response = self.make_request("GET", "/email-logs/", params={"days": 30, "limit": 10})
+        if response and response.status_code == 200:
+            logs_data = response.json()
+            required_fields = ["logs", "total", "offset", "limit"]
+            has_required_fields = all(field in logs_data for field in required_fields)
+            
+            if has_required_fields:
+                logs = logs_data.get("logs", [])
+                self.log_result("Get Email Logs", True, f"Retrieved {len(logs)} email logs (total: {logs_data.get('total', 0)})")
+                
+                # Verify log structure if logs exist
+                if logs:
+                    first_log = logs[0]
+                    log_fields = ["id", "to_email", "subject", "email_type", "status", "created_at"]
+                    has_log_fields = all(field in first_log for field in log_fields)
+                    if has_log_fields:
+                        self.log_result("Email Log Structure", True, f"Log structure valid: {first_log.get('email_type')} to {first_log.get('to_email')}")
+                    else:
+                        self.log_result("Email Log Structure", False, "Missing required log fields", first_log)
+            else:
+                self.log_result("Get Email Logs", False, "Missing required response fields", logs_data)
+        else:
+            error = response.text if response else "Request failed"
+            self.log_result("Get Email Logs", False, "Failed to get email logs", error)
+        
+        # 2. Test GET /api/email-logs/stats - Email statistics
+        response = self.make_request("GET", "/email-logs/stats", params={"days": 30})
+        if response and response.status_code == 200:
+            stats_data = response.json()
+            required_stats = ["total_emails", "sent", "failed", "success_rate", "by_type", "by_day"]
+            has_required_stats = all(field in stats_data for field in required_stats)
+            
+            if has_required_stats:
+                total = stats_data.get("total_emails", 0)
+                success_rate = stats_data.get("success_rate", 0)
+                by_type = stats_data.get("by_type", {})
+                self.log_result("Email Statistics", True, f"Total: {total}, Success rate: {success_rate}%, Types: {len(by_type)}")
+            else:
+                self.log_result("Email Statistics", False, "Missing required statistics fields", stats_data)
+        else:
+            error = response.text if response else "Request failed"
+            self.log_result("Email Statistics", False, "Failed to get email statistics", error)
+        
+        # 3. Test GET /api/email-logs/types - Available email types
+        response = self.make_request("GET", "/email-logs/types")
+        if response and response.status_code == 200:
+            types_data = response.json()
+            if "types" in types_data and isinstance(types_data["types"], list):
+                types = types_data["types"]
+                # Verify type structure
+                if types:
+                    first_type = types[0]
+                    type_fields = ["id", "label", "icon"]
+                    has_type_fields = all(field in first_type for field in type_fields)
+                    if has_type_fields:
+                        self.log_result("Email Types", True, f"Retrieved {len(types)} email types: {[t.get('id') for t in types[:3]]}")
+                    else:
+                        self.log_result("Email Types", False, "Invalid type structure", first_type)
+                else:
+                    self.log_result("Email Types", True, "Retrieved empty types list")
+            else:
+                self.log_result("Email Types", False, "Invalid types response format", types_data)
+        else:
+            error = response.text if response else "Request failed"
+            self.log_result("Email Types", False, "Failed to get email types", error)
+        
+        # 4. Test filtering by email_type and status
+        response = self.make_request("GET", "/email-logs/", params={"email_type": "order_confirmation", "days": 30})
+        if response and response.status_code == 200:
+            filtered_data = response.json()
+            logs = filtered_data.get("logs", [])
+            # Check if all logs have the correct email_type (if any logs exist)
+            if logs:
+                correct_type = all(log.get("email_type") == "order_confirmation" for log in logs)
+                if correct_type:
+                    self.log_result("Filter by Email Type", True, f"Found {len(logs)} order_confirmation emails")
+                else:
+                    self.log_result("Filter by Email Type", False, "Filter not working correctly")
+            else:
+                self.log_result("Filter by Email Type", True, "No order_confirmation emails found (filter working)")
+        else:
+            error = response.text if response else "Request failed"
+            self.log_result("Filter by Email Type", False, "Failed to filter by email type", error)
+        
+        # 5. Test filtering by status
+        response = self.make_request("GET", "/email-logs/", params={"status": "sent", "days": 30})
+        if response and response.status_code == 200:
+            filtered_data = response.json()
+            logs = filtered_data.get("logs", [])
+            if logs:
+                correct_status = all(log.get("status") == "sent" for log in logs)
+                if correct_status:
+                    self.log_result("Filter by Status", True, f"Found {len(logs)} sent emails")
+                else:
+                    self.log_result("Filter by Status", False, "Status filter not working correctly")
+            else:
+                self.log_result("Filter by Status", True, "No sent emails found (filter working)")
+        else:
+            error = response.text if response else "Request failed"
+            self.log_result("Filter by Status", False, "Failed to filter by status", error)
+
     def test_edge_cases(self):
         """Test edge cases and error handling"""
         print("\n=== TESTING EDGE CASES ===")
@@ -530,6 +636,7 @@ class DroomvriendjesAPITester:
         self.test_review_apis()
         self.test_product_advanced_apis()
         self.test_orders_api()
+        self.test_email_logs_apis()
         self.test_edge_cases()
         
         # Cleanup
@@ -567,6 +674,7 @@ class DroomvriendjesAPITester:
         print("  ✓ Review Management (Edit, Bulk Delete, Filtering)")
         print("  ✓ Product Advanced Editor (Images with Alt-text)")
         print("  ✓ Orders API (Discount Calculations)")
+        print("  ✓ Email Logs API (Logs, Statistics, Types)")
         print("  ✓ Edge Cases & Error Handling")
         print("  ✓ Backward Compatibility")
 

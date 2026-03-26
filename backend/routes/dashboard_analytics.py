@@ -149,17 +149,27 @@ async def get_dashboard_analytics(days: int = Query(30, ge=0, le=365)):
             })
         daily_breakdown.reverse()
 
-        # Email logs from MongoDB
-        email_stats = {'total_sent': 0, 'recent': []}
-        if mongo_db:
-            try:
-                email_count = await mongo_db.email_logs.count_documents({})
-                email_recent = await mongo_db.email_logs.find(
-                    {}, {"_id": 0}
-                ).sort("created_at", -1).to_list(length=20)
-                email_stats = {'total_sent': email_count, 'recent': email_recent}
-            except Exception as e:
-                logger.warning(f"Email logs fetch error: {e}")
+        # Email logs from Supabase (new email_logs table)
+        email_stats = {'total_sent': 0, 'recent': [], 'by_type': {}}
+        try:
+            # Get email stats from Supabase
+            email_result = supabase.table('email_logs').select('*').order('created_at', desc=True).limit(100).execute()
+            emails = email_result.data or []
+            
+            email_stats['total_sent'] = len(emails)
+            email_stats['sent_count'] = len([e for e in emails if e.get('status') == 'sent'])
+            email_stats['failed_count'] = len([e for e in emails if e.get('status') == 'failed'])
+            email_stats['recent'] = emails[:10]
+            
+            # Count by type
+            by_type = {}
+            for email in emails:
+                t = email.get('email_type', 'unknown')
+                by_type[t] = by_type.get(t, 0) + 1
+            email_stats['by_type'] = by_type
+            
+        except Exception as e:
+            logger.warning(f"Email logs fetch error: {e}")
 
         return {
             'stats': {
