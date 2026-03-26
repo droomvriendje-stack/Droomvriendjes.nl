@@ -21,6 +21,14 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import httpx
 import base64
+import re
+
+# Postmark email service
+try:
+    from postmarker.core import PostmarkClient
+    POSTMARK_AVAILABLE = True
+except ImportError:
+    POSTMARK_AVAILABLE = False
 
 # Configure logging FIRST (before any usage)
 logging.basicConfig(
@@ -144,12 +152,26 @@ if SENDCLOUD_PUBLIC_KEY:
 else:
     logger.warning("⚠️ Sendcloud API keys not configured")
 
-# SMTP Email configuration
+# SMTP Email configuration (legacy fallback)
 SMTP_HOST = os.environ.get('SMTP_HOST', 'smtp.transip.email')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', 465))
 SMTP_USER = os.environ.get('SMTP_USER', '')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SMTP_FROM = os.environ.get('SMTP_FROM', 'info@droomvriendjes.nl')
+
+# Postmark Email Service (primary - better deliverability)
+POSTMARK_API_TOKEN = os.environ.get('POSTMARK_API_TOKEN', '')
+USE_POSTMARK = bool(POSTMARK_API_TOKEN and POSTMARK_AVAILABLE)
+
+if USE_POSTMARK:
+    postmark_client = PostmarkClient(server_token=POSTMARK_API_TOKEN)
+    logger.info(f"✅ Postmark email service configured (token: {POSTMARK_API_TOKEN[:15]}...)")
+else:
+    postmark_client = None
+    if POSTMARK_API_TOKEN and not POSTMARK_AVAILABLE:
+        logger.warning("⚠️ Postmark token set but postmarker library not installed")
+    elif not POSTMARK_API_TOKEN:
+        logger.warning("⚠️ POSTMARK_API_TOKEN not set - using legacy SMTP")
 
 # Owner notification email
 OWNER_EMAIL = "info@droomvriendjes.nl"
@@ -457,7 +479,7 @@ def _add_tracking_to_email(html_content: str, email_id: str, base_url: str = "ht
 
 
 def send_email(to_email: str, subject: str, html_content: str, text_content: str, reply_to: str = None, email_type: str = "general", order_id: str = None, customer_name: str = None):
-    """Generic email sending function with logging and tracking"""
+    """Generic email sending function with logging and tracking - uses Postmark for better deliverability"""
     # First log the email to get an ID for tracking
     email_id = _log_email_to_db(to_email, subject, email_type, "pending", order_id, customer_name)
     
@@ -465,6 +487,43 @@ def send_email(to_email: str, subject: str, html_content: str, text_content: str
         # Add tracking pixel to HTML content
         tracked_html = _add_tracking_to_email(html_content, email_id)
         
+        # Use Postmark if available (better deliverability)
+        if USE_POSTMARK and postmark_client:
+            try:
+                response = postmark_client.emails.send(
+                    From=f'Droomvriendjes <{SMTP_FROM}>',
+                    To=to_email,
+                    Subject=subject,
+                    HtmlBody=tracked_html,
+                    TextBody=text_content,
+                    ReplyTo=reply_to,
+                    TrackOpens=True,
+                    TrackLinks="HtmlAndText",
+                    Tag=email_type,
+                    Metadata={
+                        "email_id": email_id or "",
+                        "order_id": order_id or "",
+                        "customer_name": customer_name or ""
+                    }
+                )
+                
+                message_id = response.get("MessageID", "")
+                logger.info(f"✅ EMAIL SENT via Postmark: To={to_email}, Subject={subject}, MessageID={message_id}")
+                
+                # Update status to sent with Postmark message ID
+                if supabase_client and email_id:
+                    supabase_client.table("email_logs").update({
+                        "status": "sent",
+                        "metadata": json.dumps({"postmark_message_id": message_id, "provider": "postmark"})
+                    }).eq("id", email_id).execute()
+                
+                return True
+                
+            except Exception as postmark_error:
+                logger.error(f"❌ Postmark failed: {postmark_error}, falling back to SMTP")
+                # Fall through to SMTP
+        
+        # Fallback to legacy SMTP
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = f'Droomvriendjes <{SMTP_FROM}>'
@@ -482,11 +541,14 @@ def send_email(to_email: str, subject: str, html_content: str, text_content: str
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_FROM, to_email, msg.as_string())
         
-        logger.info(f"✅ EMAIL SENT: To={to_email}, Subject={subject}")
+        logger.info(f"✅ EMAIL SENT via SMTP: To={to_email}, Subject={subject}")
         
         # Update status to sent
         if supabase_client and email_id:
-            supabase_client.table("email_logs").update({"status": "sent"}).eq("id", email_id).execute()
+            supabase_client.table("email_logs").update({
+                "status": "sent",
+                "metadata": json.dumps({"provider": "smtp"})
+            }).eq("id", email_id).execute()
         
         return True
         
