@@ -212,7 +212,7 @@ const AdminDashboardPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm">Omzet ({selectedDays === 0 ? 'Totaal' : selectedDays === 1 ? 'Vandaag' : `${selectedDays}d`})</p>
-                  <p className="text-3xl font-bold mt-1">€{stats?.total_revenue?.toFixed(2) || '0.00'}</p>
+                  <p className="text-3xl font-bold mt-1">€{stats?.total_revenue?.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}</p>
                   <p className={`text-sm mt-2 flex items-center gap-1 ${stats?.revenue_growth >= 0 ? 'text-purple-200' : 'text-red-200'}`}>
                     {stats?.revenue_growth >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                     {stats?.revenue_growth >= 0 ? '+' : ''}{stats?.revenue_growth || 0}% vs vorige periode
