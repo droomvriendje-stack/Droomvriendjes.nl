@@ -172,6 +172,7 @@ from routes import uploads as uploads_route
 from routes import marketing as marketing_route
 from routes import database_info as database_info_route
 from routes import dashboard_analytics as dashboard_analytics_route
+from routes import ai_campaigns as ai_campaigns_route
 from routes import gift_cards_supabase as gift_cards_supabase_route
 from routes import csv_import as csv_import_route
 
