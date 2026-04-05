@@ -1,13 +1,18 @@
-# Existing Dockerfile content
-
-# (Ensure to include all existing content of the Dockerfile and add the new lines as specified)
+FROM python:3.9
 
 RUN apt-get update && apt-get install -y \
-    gcc \
     libffi-dev \
     libssl-dev \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# ...
+WORKDIR /app
 
-RUN pip install --no-cache-dir --upgrade pip
+COPY requirements.txt ./
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . ./
+
+CMD ["uvicorn", "server:app"]
