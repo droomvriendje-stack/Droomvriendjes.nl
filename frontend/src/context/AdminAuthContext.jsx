@@ -1,8 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiUrl } from '../api/client';
 
-// Use relative URL for local proxy
-// Auth Context
 const AdminAuthContext = createContext(null);
 
 export const useAdminAuth = () => useContext(AdminAuthContext);
@@ -24,7 +23,7 @@ export const AdminAuthProvider = ({ children }) => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch('/api/admin/verify', {
+      const response = await fetch(apiUrl('/api/admin/verify'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -43,8 +42,7 @@ export const AdminAuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      // Use GET-based dev-login for CRA proxy compatibility
-      const response = await fetch(`/api/admin/dev-login?u=${encodeURIComponent(username)}&p=${encodeURIComponent(password)}`);
+      const response = await fetch(apiUrl(`/api/admin/dev-login?u=${encodeURIComponent(username)}&p=${encodeURIComponent(password)}`));
       
       if (response.ok) {
         const data = await response.json();
