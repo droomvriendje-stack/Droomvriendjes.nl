@@ -5,7 +5,7 @@
 fastapi==0.110.1
 uvicorn==0.25.0
 starlette==0.37.2
-python-multipart==0.0.21
+python-multipart==0.0.20
 
 # Supabase (Database)
 supabase==2.28.0
