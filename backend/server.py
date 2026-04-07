@@ -394,6 +394,11 @@ async def get_products_for_feed():
 
 # ============== HEALTH CHECK ENDPOINT (Required for Kubernetes) ==============
 
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"status": "ok"}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint for Kubernetes liveness/readiness probes"""
