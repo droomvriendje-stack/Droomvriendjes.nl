@@ -1,3 +1,4 @@
+# Multi-stage build: Vite frontend -> nginx
 # Stage 1: Build the frontend
 FROM node:20-alpine AS builder
 
@@ -21,7 +22,7 @@ FROM nginx:alpine
 # Copy built files
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Custom nginx config to add /health endpoint and SPA support
+# Custom nginx config with /health endpoint and SPA support
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
