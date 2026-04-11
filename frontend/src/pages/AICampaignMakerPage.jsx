@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Send, Copy, Check, RefreshCw, Facebook, Instagram, ChevronDown, Loader2, Image, Video, X, Upload } from 'lucide-react';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const TIKTOK_ICON = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">

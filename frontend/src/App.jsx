@@ -5,6 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "./context/CartContext";
 import { ProductsProvider } from "./context/ProductsContext";
 import { AdminAuthProvider, ProtectedAdminRoute } from "./context/AdminAuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import WhatsAppButton from "./components/WhatsAppButton";
 import WelcomePopup from "./components/WelcomePopup";
 import HomePage from "./pages/HomePage";
@@ -81,6 +82,7 @@ function App() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <HelmetProvider>
     <div className="App">
       <ProductsProvider>
@@ -88,6 +90,7 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <AdminAuthProvider>
+
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
@@ -183,6 +186,7 @@ function App() {
       </ProductsProvider>
     </div>
     </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 
