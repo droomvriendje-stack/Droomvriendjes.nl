@@ -48,10 +48,22 @@ apiClient.interceptors.response.use(
  * Useful when you need to pass a URL string rather than use the axios
  * instance (e.g. native fetch calls in legacy code).
  *
- * Example:
+ * If VITE_API_URL is not set, returns the path as-is so that the
+ * browser issues a relative request (e.g. '/api/products'). nginx
+ * will proxy those requests to the backend, keeping fetch() valid
+ * even when the env var is missing at build time.
+ *
+ * Example (env var set):
  *   apiUrl('/api/products')  →  'https://api.example.com/api/products'
+ * Example (env var missing):
+ *   apiUrl('/api/products')  →  '/api/products'
  */
 export function apiUrl(path) {
+  // If VITE_API_URL is not set, use relative /api/ URLs
+  // nginx will proxy these to the backend
+  if (!API_BASE_URL) {
+    return path;  // e.g., '/api/products'
+  }
   return `${API_BASE_URL}${path}`;
 }
 
