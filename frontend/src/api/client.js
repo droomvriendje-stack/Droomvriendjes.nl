@@ -5,10 +5,10 @@ import axios from 'axios';
 // (injected at build time by Vite). Falls back to the production URL
 // so API calls always reach the correct service even if the env var
 // is not explicitly set at build time.
-export const API_URL = import.meta.env.VITE_API_URL || 'https://api.spoeddenhaag.nl';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://web-production-3e5df6.up.railway.app';
 
 // Base URL for the products API (separate service).
-export const PRODUCTS_API_URL = import.meta.env.VITE_PRODUCTS_API_URL || 'https://products-api.spoeddenhaag.nl';
+export const PRODUCTS_API_URL = import.meta.env.VITE_PRODUCTS_API_URL || 'https://web-production-3e5df6.up.railway.app';
 
 /**
  * Pre-configured axios instance for all backend API calls.

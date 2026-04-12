@@ -3,6 +3,9 @@
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
+[build.args]
+VITE_API_URL = "https://web-production-3e5df6.up.railway.app"
+
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 30
