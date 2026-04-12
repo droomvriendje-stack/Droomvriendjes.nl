@@ -1,3 +1,4 @@
+# Frontend (website) service — uses the default Dockerfile (nginx)
 [build]
 builder = "dockerfile"
 
