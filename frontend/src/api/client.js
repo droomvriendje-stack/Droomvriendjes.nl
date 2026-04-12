@@ -2,9 +2,13 @@ import axios from 'axios';
 
 // Base URL for the backend API.
 // In production this is set via the VITE_API_URL environment variable
-// (injected at build time by Vite). In development the Vite dev server
-// proxies /api/* to the local backend, so an empty string is correct.
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+// (injected at build time by Vite). Falls back to the production URL
+// so API calls always reach the correct service even if the env var
+// is not explicitly set at build time.
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.spoeddenhaag.nl';
+
+// Base URL for the products API (separate service).
+export const PRODUCTS_API_URL = import.meta.env.VITE_PRODUCTS_API_URL || 'https://products-api.spoeddenhaag.nl';
 
 /**
  * Pre-configured axios instance for all backend API calls.
@@ -14,7 +18,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
  *   const { data } = await apiClient.get('/api/products');
  */
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -48,23 +52,41 @@ apiClient.interceptors.response.use(
  * Useful when you need to pass a URL string rather than use the axios
  * instance (e.g. native fetch calls in legacy code).
  *
- * If VITE_API_URL is not set, returns the path as-is so that the
- * browser issues a relative request (e.g. '/api/products'). nginx
- * will proxy those requests to the backend, keeping fetch() valid
- * even when the env var is missing at build time.
- *
- * Example (env var set):
- *   apiUrl('/api/products')  →  'https://api.example.com/api/products'
- * Example (env var missing):
- *   apiUrl('/api/products')  →  '/api/products'
+ * Example:
+ *   apiUrl('/api/products')  →  'https://api.spoeddenhaag.nl/api/products'
  */
 export function apiUrl(path) {
-  // If VITE_API_URL is not set, use relative /api/ URLs
-  // nginx will proxy these to the backend
-  if (!API_BASE_URL) {
-    return path;  // e.g., '/api/products'
-  }
-  return `${API_BASE_URL}${path}`;
+  return `${API_URL}${path}`;
+}
+
+/**
+ * Fetch wrapper for the backend API.
+ * Automatically prepends API_URL and sets Content-Type: application/json.
+ */
+export async function apiCall(endpoint, options = {}) {
+  const url = `${API_URL}${endpoint}`;
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+}
+
+/**
+ * Fetch wrapper for the products API.
+ * Automatically prepends PRODUCTS_API_URL and sets Content-Type: application/json.
+ */
+export async function productsApiCall(endpoint, options = {}) {
+  const url = `${PRODUCTS_API_URL}${endpoint}`;
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 }
 
 export default apiClient;

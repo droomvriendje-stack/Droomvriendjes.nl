@@ -12,6 +12,7 @@ import { Star, ShoppingCart, Moon, Heart, Sparkles, Monitor, ShieldCheck, Truck,
 import CartSidebar from '../components/CartSidebar';
 import Header from '../components/Header';
 import SchemaMarkup from '../components/SchemaMarkup';
+import { API_URL } from '../api/client';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { trackViewItemList, trackSelectItem } from '../utils/analytics';
@@ -56,7 +57,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`/api/reviews`);
+        const response = await fetch(`${API_URL}/api/reviews`);
         if (response.ok) {
           const data = await response.json();
           setReviews(data);

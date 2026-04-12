@@ -13,6 +13,7 @@ import {
   User
 } from 'lucide-react';
 import { products } from '../mockData';
+import { API_URL } from '../api/client';
 
 
 const DroomvriendjesReviewsPage = () => {
@@ -30,7 +31,7 @@ const DroomvriendjesReviewsPage = () => {
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/reviews`);
+      const response = await fetch(`${API_URL}/api/reviews`);
       if (response.ok) {
         const data = await response.json();
         setReviews(data);

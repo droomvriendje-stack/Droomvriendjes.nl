@@ -5,6 +5,7 @@ import { trackCheckoutStart, trackAddressFilled, trackPaymentSelected } from '..
 import { ShoppingCart, CreditCard, Lock, Check, Truck, Heart, ArrowLeft, Loader2, Plus, Minus, Trash2, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { trackBeginCheckout, trackAddPaymentInfo, trackAddShippingInfo } from '../utils/analytics';
 import { products } from '../mockData';
+import { API_URL } from '../api/client';
 
 
 const CheckoutPage = () => {
@@ -64,7 +65,7 @@ const CheckoutPage = () => {
     if (!email || cart.length === 0) return;
     
     try {
-      await fetch(`/api/email/track-checkout`, {
+      await fetch(`${API_URL}/api/email/track-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,7 +97,7 @@ const CheckoutPage = () => {
     try {
       const params = new URLSearchParams({ postcode: pc });
       if (houseNumber) params.append('huisnummer', houseNumber);
-      const res = await fetch(`/api/address/lookup?${params}`);
+      const res = await fetch(`${API_URL}/api/address/lookup?${params}`);
       if (!res.ok) {
         setAddressLoading(false);
         return;
@@ -173,7 +174,7 @@ const CheckoutPage = () => {
       trackAddShippingInfo(cart, 'standard_shipping');
       
       // Notify backend of checkout start
-      await fetch(`/api/checkout-started`, {
+      await fetch(`${API_URL}/api/checkout-started`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -191,7 +192,7 @@ const CheckoutPage = () => {
       const giftWrapCost = formData.giftWrap ? GIFT_WRAP_PRICE : 0;
       const finalTotal = Math.max(0, subtotal - autoDiscount - couponDiscount + giftWrapCost);
       
-      const orderResponse = await fetch(`/api/orders`, {
+      const orderResponse = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,7 +226,7 @@ const CheckoutPage = () => {
       const orderData = await orderResponse.json();
 
       // Create payment via backend (SECURE - no API key in frontend!)
-      const paymentResponse = await fetch(`/api/payments/create`, {
+      const paymentResponse = await fetch(`${API_URL}/api/payments/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

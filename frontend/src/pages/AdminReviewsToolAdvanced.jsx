@@ -7,6 +7,7 @@ import {
   ArrowLeft, Star, Trash2, Search, RefreshCw, Plus, Eye, EyeOff,
   User, Package, X, Check, ChevronDown, ChevronUp, MessageSquare
 } from 'lucide-react';
+import { API_URL } from '../api/client';
 
 const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState([]);
@@ -29,9 +30,9 @@ const AdminReviewsPage = () => {
     setLoading(true);
     try {
       const [reviewsRes, productsRes, statsRes] = await Promise.all([
-        fetch('/api/reviews/admin'),
-        fetch('/api/products'),
-        fetch('/api/reviews/stats')
+        fetch(`${API_URL}/api/reviews/admin`),
+        fetch(`${API_URL}/api/products`),
+        fetch(`${API_URL}/api/reviews/stats`)
       ]);
       if (reviewsRes.ok) setReviews(await reviewsRes.json());
       if (productsRes.ok) {
@@ -49,7 +50,7 @@ const AdminReviewsPage = () => {
 
   const handleToggleVisibility = async (reviewId, currentVisible) => {
     try {
-      const res = await fetch(`/api/reviews/${reviewId}/visibility?visible=${!currentVisible}`, { method: 'PUT' });
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}/visibility?visible=${!currentVisible}`, { method: 'PUT' });
       if (res.ok) {
         setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, visible: !currentVisible } : r));
         showMsg('success', `Review ${!currentVisible ? 'zichtbaar' : 'verborgen'}`);
@@ -60,7 +61,7 @@ const AdminReviewsPage = () => {
   const handleDelete = async (reviewId) => {
     if (!window.confirm('Weet je zeker dat je deze review wilt verwijderen?')) return;
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, { method: 'DELETE' });
       if (res.ok) {
         setReviews(prev => prev.filter(r => r.id !== reviewId));
         showMsg('success', 'Review verwijderd');
@@ -77,7 +78,7 @@ const AdminReviewsPage = () => {
     setSubmitting(true);
     const product = products.find(p => p.id === newReview.product_id);
     try {
-      const res = await fetch('/api/reviews', {
+      const res = await fetch(`${API_URL}/api/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

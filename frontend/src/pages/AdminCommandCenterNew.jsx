@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { supabase } from '../lib/supabase';
+import { API_URL } from '../api/client';
 import {
   LayoutDashboard, BarChart3, Send, MessageCircle, Users,
   Megaphone, Gift, Star, Layers, LogOut, ChevronRight,
@@ -119,14 +120,14 @@ const AdminCommandCenterNew = () => {
     
     try {
       // Fetch products
-      const productsRes = await fetch(`/api/products`);
+      const productsRes = await fetch(`${API_URL}/api/products`);
       if (productsRes.ok) {
         const productsData = await productsRes.json();
         setProducts(productsData);
       }
 
       // Fetch full dashboard stats (last 30 days for analytics)
-      const dashboardRes = await fetch(`/api/admin/dashboard?days=30`, {
+      const dashboardRes = await fetch(`${API_URL}/api/admin/dashboard?days=30`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (dashboardRes.ok) {
@@ -151,7 +152,7 @@ const AdminCommandCenterNew = () => {
       }
 
       // Fetch funnel stats
-      const funnelRes = await fetch(`/api/admin/funnel-stats?days=30`, {
+      const funnelRes = await fetch(`${API_URL}/api/admin/funnel-stats?days=30`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (funnelRes.ok) {
@@ -160,7 +161,7 @@ const AdminCommandCenterNew = () => {
       }
 
       // Fetch email stats
-      const emailRes = await fetch(`/api/email-logs/stats?days=30`, {
+      const emailRes = await fetch(`${API_URL}/api/email-logs/stats?days=30`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (emailRes.ok) {

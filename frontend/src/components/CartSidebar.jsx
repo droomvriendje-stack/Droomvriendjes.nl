@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { ShoppingCart, X, Plus, Minus, Truck, Loader2, Tag, Ticket, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { trackBeginCheckout, trackCheckoutClicked } from '../utils/analytics';
 import { products } from '../mockData';
+import { API_URL } from '../api/client';
 
 
 const CartSidebar = () => {
@@ -64,7 +65,7 @@ const CartSidebar = () => {
         quantity: item.quantity
       }));
       
-      await fetch(`/api/checkout-started`, {
+      await fetch(`${API_URL}/api/checkout-started`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +101,7 @@ const CartSidebar = () => {
     setCodeSuccess('');
     
     try {
-      const response = await fetch(`/api/discount/validate`, {
+      const response = await fetch(`${API_URL}/api/discount/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

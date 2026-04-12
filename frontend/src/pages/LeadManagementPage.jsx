@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
+import { API_URL } from '../api/client';
 import {
   ArrowLeft,
   Users,
@@ -137,7 +138,7 @@ const LeadManagementPage = () => {
   
   const fetchStats = async () => {
     try {
-      const response = await fetch(`/api/marketing/leads/stats`);
+      const response = await fetch(`${API_URL}/api/marketing/leads/stats`);
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -180,7 +181,7 @@ const LeadManagementPage = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const response = await fetch(`/api/marketing/leads/upload-csv`, {
+      const response = await fetch(`${API_URL}/api/marketing/leads/upload-csv`, {
         method: 'POST',
         body: formData
       });
@@ -208,7 +209,7 @@ const LeadManagementPage = () => {
     if (!window.confirm('Weet je zeker dat je deze lead wilt verwijderen?')) return;
     
     try {
-      const response = await fetch(`/api/marketing/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/api/marketing/leads/${leadId}`, {
         method: 'DELETE'
       });
       
@@ -229,7 +230,7 @@ const LeadManagementPage = () => {
     try {
       await Promise.all(
         selectedLeads.map(id =>
-          fetch(`/api/marketing/leads/${id}`, { method: 'DELETE' })
+          fetch(`${API_URL}/api/marketing/leads/${id}`, { method: 'DELETE' })
         )
       );
       
@@ -245,7 +246,7 @@ const LeadManagementPage = () => {
   // Update handler
   const handleUpdateLead = async (leadData) => {
     try {
-      const response = await fetch(`/api/marketing/leads/${editingLead.id}`, {
+      const response = await fetch(`${API_URL}/api/marketing/leads/${editingLead.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadData)

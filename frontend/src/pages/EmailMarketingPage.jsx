@@ -9,6 +9,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Layout from '../components/Layout';
+import { API_URL } from '../api/client';
 
 
 const EmailMarketingPage = () => {
@@ -37,11 +38,11 @@ const EmailMarketingPage = () => {
     setLoading(true);
     try {
       const [statsRes, cartsRes, queueRes, templatesRes, subscribersRes] = await Promise.all([
-        fetch(`/api/email/stats?days=30`),
-        fetch(`/api/email/abandoned-carts?limit=50`),
-        fetch(`/api/email/queue?limit=50`),
-        fetch(`/api/email/templates`),
-        fetch(`/api/email/subscribers?limit=50`)
+        fetch(`${API_URL}/api/email/stats?days=30`),
+        fetch(`${API_URL}/api/email/abandoned-carts?limit=50`),
+        fetch(`${API_URL}/api/email/queue?limit=50`),
+        fetch(`${API_URL}/api/email/templates`),
+        fetch(`${API_URL}/api/email/subscribers?limit=50`)
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
@@ -68,7 +69,7 @@ const EmailMarketingPage = () => {
 
   const startAbandonedCartFlow = async (cartId) => {
     try {
-      const res = await fetch(`/api/email/abandoned-cart/${cartId}/start-flow`, {
+      const res = await fetch(`${API_URL}/api/email/abandoned-cart/${cartId}/start-flow`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -83,7 +84,7 @@ const EmailMarketingPage = () => {
   const processQueue = async () => {
     setProcessingQueue(true);
     try {
-      const res = await fetch(`/api/email/process-queue`, {
+      const res = await fetch(`${API_URL}/api/email/process-queue`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -105,7 +106,7 @@ const EmailMarketingPage = () => {
 
     setSendingEmail(true);
     try {
-      const res = await fetch(`/api/email/send`, {
+      const res = await fetch(`${API_URL}/api/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(manualEmail)

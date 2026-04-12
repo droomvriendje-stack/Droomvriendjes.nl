@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { shoppingCampaigns, campaignMetrics, allSeoKeywords } from '../data/shoppingCampaigns';
 import { useToast } from '../hooks/use-toast';
+import { API_URL } from '../api/client';
 import { 
   Search, TrendingUp, DollarSign, Eye, MousePointer, ShoppingCart,
   Zap, Target, Megaphone, ArrowLeft, Copy, Check,
@@ -81,7 +82,7 @@ const CampaignManagementPage = () => {
     try {
       const campaignIds = selectedCampaigns.length > 0 ? selectedCampaigns : null;
       
-      const response = await fetch(`/api/google-ads/campaigns/create-predefined`, {
+      const response = await fetch(`${API_URL}/api/google-ads/campaigns/create-predefined`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ campaign_ids: campaignIds })

@@ -7,6 +7,7 @@ import { Mail, MapPin, Clock, Loader2, MessageCircle, Phone, ArrowRight } from '
 import { useToast } from '../hooks/use-toast';
 import { trackContactFormSubmit } from '../utils/analytics';
 import Layout from '../components/Layout';
+import { API_URL } from '../api/client';
 
 // WhatsApp configuration
 const WHATSAPP_NUMBER = '31684588815';
@@ -30,7 +31,7 @@ const ContactPage = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`/api/contact`, {
+      const response = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

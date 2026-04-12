@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || '';
+import { API_URL as BACKEND_URL } from '../../api/client';
 
 const EMAIL_TYPE_CONFIG = {
   order_confirmation: { label: 'Bevestigingsmail', icon: '📦', color: 'bg-green-100 text-green-800' },

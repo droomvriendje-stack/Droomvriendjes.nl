@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { API_URL } from '../api/client';
 import { 
   ArrowLeft, 
   Upload, 
@@ -43,7 +44,7 @@ const AdminReviewsImporterPage = () => {
   // Fetch products from Supabase
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products');
+      const response = await fetch(`${API_URL}/api/products`);
       if (response.ok) {
         const data = await response.json();
         setProducts(data.map(p => ({
@@ -63,7 +64,7 @@ const AdminReviewsImporterPage = () => {
   const fetchReviews = async () => {
     setLoadingReviews(true);
     try {
-      const response = await fetch(`/api/reviews/admin`);
+      const response = await fetch(`${API_URL}/api/reviews/admin`);
       if (response.ok) {
         const data = await response.json();
         setReviews(data);
@@ -77,7 +78,7 @@ const AdminReviewsImporterPage = () => {
   // Fetch review stats
   const fetchStats = async () => {
     try {
-      const response = await fetch(`/api/reviews/stats`);
+      const response = await fetch(`${API_URL}/api/reviews/stats`);
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -96,7 +97,7 @@ const AdminReviewsImporterPage = () => {
   // Handle toggle visibility
   const handleToggleVisibility = async (reviewId, currentVisible) => {
     try {
-      const response = await fetch(`/api/reviews/${reviewId}/visibility?visible=${!currentVisible}`, {
+      const response = await fetch(`${API_URL}/api/reviews/${reviewId}/visibility?visible=${!currentVisible}`, {
         method: 'PUT'
       });
 
@@ -137,7 +138,7 @@ const AdminReviewsImporterPage = () => {
       formData.append('product_id', selectedProduct.id);
       formData.append('product_name', selectedProduct.shortName);
 
-      const response = await fetch(`/api/reviews/import-csv`, {
+      const response = await fetch(`${API_URL}/api/reviews/import-csv`, {
         method: 'POST',
         body: formData
       });
@@ -174,7 +175,7 @@ const AdminReviewsImporterPage = () => {
     if (!window.confirm('Weet je zeker dat je deze review wilt verwijderen?')) return;
 
     try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
         method: 'DELETE'
       });
 
@@ -195,7 +196,7 @@ const AdminReviewsImporterPage = () => {
 
     try {
       const ids = reviews.map(r => r.id);
-      const response = await fetch(`/api/reviews/bulk-delete`, {
+      const response = await fetch(`${API_URL}/api/reviews/bulk-delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids })

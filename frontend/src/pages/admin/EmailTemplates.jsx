@@ -8,7 +8,7 @@ import {
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { API_URL } from '../../api/client';
 
 const EmailTemplatesAdmin = () => {
   const navigate = useNavigate();

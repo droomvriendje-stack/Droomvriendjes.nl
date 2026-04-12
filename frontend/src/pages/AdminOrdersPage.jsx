@@ -8,6 +8,7 @@ import {
   Printer, ExternalLink, ChevronDown, ChevronUp, Eye, Clock,
   CreditCard, MapPin, Phone, Filter, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { API_URL } from '../api/client';
 
 const CARRIERS = {
   postnl: { name: 'PostNL', trackingUrl: (code) => `https://postnl.nl/tracktrace/?B=${code}&P=&D=NL&T=C` },
@@ -53,7 +54,7 @@ const AdminOrdersPage = () => {
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (searchTerm.trim()) params.set('search', searchTerm.trim());
       
-      const response = await fetch(`/api/admin/orders?${params}`);
+      const response = await fetch(`${API_URL}/api/admin/orders?${params}`);
       if (response.ok) {
         const data = await response.json();
         setOrders(data.orders || []);
@@ -77,7 +78,7 @@ const AdminOrdersPage = () => {
     setExpandedOrder(orderId);
     setLoadingDetail(true);
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}`);
+      const response = await fetch(`${API_URL}/api/admin/orders/${orderId}`);
       if (response.ok) {
         const data = await response.json();
         setOrderDetail(data);
@@ -90,7 +91,7 @@ const AdminOrdersPage = () => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_URL}/api/admin/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -115,7 +116,7 @@ const AdminOrdersPage = () => {
     }
     setSaving(true);
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/tracking`, {
+      const response = await fetch(`${API_URL}/api/admin/orders/${orderId}/tracking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tracking_code: trackingCode.trim(), carrier: selectedCarrier, send_email: true })

@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Star, Filter, ChevronDown, RefreshCw } from 'lucide-react';
 import { products } from '../mockData';
 import Layout from '../components/Layout';
+import { API_URL } from '../api/client';
 
 
 const ReviewsPage = () => {
@@ -18,7 +19,7 @@ const ReviewsPage = () => {
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/reviews`);
+        const response = await fetch(`${API_URL}/api/reviews`);
         if (response.ok) {
           const data = await response.json();
           setReviews(data);
@@ -31,7 +32,7 @@ const ReviewsPage = () => {
 
     const fetchStats = async () => {
       try {
-        const response = await fetch(`/api/reviews/stats`);
+        const response = await fetch(`${API_URL}/api/reviews/stats`);
         if (response.ok) {
           const data = await response.json();
           setStats(data);

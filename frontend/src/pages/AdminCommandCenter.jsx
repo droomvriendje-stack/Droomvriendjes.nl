@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { API_URL } from '../api/client';
 import { 
   LayoutDashboard, Package, Star, ShoppingCart, TrendingUp, 
   Settings, LogOut, Users, Euro, Eye, Clock, CheckCircle, 
@@ -53,7 +54,7 @@ const AdminCommandCenter = () => {
     
     try {
       // Fetch dashboard stats
-      const statsRes = await fetch(`/api/admin/dashboard?days=${selectedDays}`, {
+      const statsRes = await fetch(`${API_URL}/api/admin/dashboard?days=${selectedDays}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (statsRes.ok) {
@@ -62,14 +63,14 @@ const AdminCommandCenter = () => {
       }
 
       // Fetch products
-      const productsRes = await fetch(`/api/products`);
+      const productsRes = await fetch(`${API_URL}/api/products`);
       if (productsRes.ok) {
         const data = await productsRes.json();
         setProducts(data);
       }
 
       // Fetch reviews for admin
-      const reviewsRes = await fetch(`/api/reviews/admin`, {
+      const reviewsRes = await fetch(`${API_URL}/api/reviews/admin`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (reviewsRes.ok) {
@@ -78,7 +79,7 @@ const AdminCommandCenter = () => {
       }
 
       // Fetch orders
-      const ordersRes = await fetch(`/api/admin/orders`, {
+      const ordersRes = await fetch(`${API_URL}/api/admin/orders`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (ordersRes.ok) {
@@ -96,7 +97,7 @@ const AdminCommandCenter = () => {
   const handleApproveReview = async (reviewId) => {
     const token = localStorage.getItem('admin_token');
     try {
-      const res = await fetch(`/api/reviews/${reviewId}/visibility`, {
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}/visibility`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -116,7 +117,7 @@ const AdminCommandCenter = () => {
     if (!window.confirm('Weet je zeker dat je deze review wilt verwijderen?')) return;
     const token = localStorage.getItem('admin_token');
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, {
+      const res = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -241,9 +242,7 @@ const AdminCommandCenter = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('image_type', imageType);
-      
-      const res = await fetch(`/api/products/${editingProduct.id}/upload-image`, {
+      const res = await fetch(`${API_URL}/api/products/${editingProduct.id}/upload-image`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -281,9 +280,8 @@ const AdminCommandCenter = () => {
   const removeGalleryImage = async (index) => {
     if (!editingProduct || editingProduct.id === 'new') return;
     
-    const token = localStorage.getItem('admin_token');
     try {
-      const res = await fetch(`/api/products/${editingProduct.id}/gallery/${index}`, {
+      const res = await fetch(`${API_URL}/api/products/${editingProduct.id}/gallery/${index}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -310,7 +308,7 @@ const AdminCommandCenter = () => {
       
       if (isCreatingNew) {
         // Create new product
-        res = await fetch(`/api/products/create`, {
+        res = await fetch(`${API_URL}/api/products/create`, {
           method: 'POST',
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -320,7 +318,7 @@ const AdminCommandCenter = () => {
         });
       } else {
         // Update existing product
-        res = await fetch(`/api/products/${editingProduct.id}/full`, {
+        res = await fetch(`${API_URL}/api/products/${editingProduct.id}/full`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${token}`,

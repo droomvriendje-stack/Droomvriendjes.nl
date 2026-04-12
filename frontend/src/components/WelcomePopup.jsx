@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Gift, Tag } from 'lucide-react';
+import { API_URL } from '../api/client';
 
 /**
  * Welcome Popup Component
@@ -14,7 +15,7 @@ const WelcomePopup = () => {
 
   const DISCOUNT_CODE = 'WELKOM10';
   const STORAGE_KEY = 'droomvriendjes_popup_shown';
-  const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+
 
   useEffect(() => {
     // Check if popup was already shown

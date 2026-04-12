@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { trackPurchase } from '../utils/analytics';
 import { Helmet } from 'react-helmet-async';
+import { API_URL } from '../api/client';
 
 
 const PaymentResultPage = () => {
@@ -50,7 +51,7 @@ const PaymentResultPage = () => {
   useEffect(() => {
     const checkPaymentStatus = async () => {
       try {
-        const response = await fetch(`/api/orders/${orderId}`);
+        const response = await fetch(`${API_URL}/api/orders/${orderId}`);
         if (!response.ok) {
           throw new Error('Order not found');
         }

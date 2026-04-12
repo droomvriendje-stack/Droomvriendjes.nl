@@ -7,7 +7,7 @@ import {
   CheckCircle, XCircle, Loader2, Play, BarChart3
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { API_URL } from '../api/client';
 
 const MarketingCommandCenter = () => {
   const { admin } = useAdminAuth();

@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Loader2, CheckCircle, XCircle, ArrowLeft, ExternalLink } from 'lucide-react';
+import { API_URL } from '../api/client';
 
 
 const GoogleAdsCallbackPage = () => {
@@ -37,7 +38,7 @@ const GoogleAdsCallbackPage = () => {
 
       try {
         // Exchange code for tokens
-        const response = await fetch(`/api/google-ads/oauth-callback`, {
+        const response = await fetch(`${API_URL}/api/google-ads/oauth-callback`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
