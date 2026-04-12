@@ -1,8 +1,9 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Request, Depends, status
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from security import validate_api_key, rate_limiter, SECURITY_HEADERS, CORS_CONFIG
 from supabase import create_client, Client as SupabaseClient
 import os
 import logging
@@ -184,6 +185,49 @@ OWNER_EMAIL = "info@droomvriendjes.nl"
 
 # Create the main app without a prefix
 app = FastAPI()
+
+# ============== SECURITY MIDDLEWARE ==============
+
+# CORS — must be added before other middleware so preflight requests are handled first
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_CONFIG["allow_origins"],
+    allow_credentials=CORS_CONFIG["allow_credentials"],
+    allow_methods=CORS_CONFIG["allow_methods"],
+    allow_headers=CORS_CONFIG["allow_headers"],
+)
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Attach security headers to every response"""
+    response = await call_next(request)
+    for header, value in SECURITY_HEADERS.items():
+        response.headers[header] = value
+    return response
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Reject requests that exceed the per-IP rate limit"""
+    client_ip = request.client.host if request.client else "unknown"
+    if not rate_limiter.is_allowed(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded"},
+        )
+    return await call_next(request)
+
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    """FastAPI dependency — require a valid X-Api-Key header on protected endpoints"""
+    if not x_api_key or not validate_api_key(x_api_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+        )
+    return x_api_key
+
 
 # Mount static files directory for serving the frontend website
 STATIC_DIR = ROOT_DIR / "static"
@@ -4336,13 +4380,7 @@ async def start_post_purchase_flow(order_id: str):
     raise HTTPException(status_code=500, detail="Failed to start flow")
 
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS middleware is registered near the top of this file via CORS_CONFIG from security.py
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

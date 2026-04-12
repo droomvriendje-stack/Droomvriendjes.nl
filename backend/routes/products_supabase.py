@@ -1,7 +1,7 @@
 """
 Products API Routes - Supabase PostgreSQL based product catalog
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File, Form, status
 from typing import List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -16,6 +16,20 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 # Supabase client - will be set by main app
 supabase = None
+
+
+# ---- API key dependency ----
+from security import validate_api_key
+
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    """Require a valid X-Api-Key header on write endpoints"""
+    if not x_api_key or not validate_api_key(x_api_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+        )
+    return x_api_key
 
 def set_supabase_client(client):
     """Set the Supabase client"""
@@ -186,7 +200,7 @@ async def get_product(product_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(verify_api_key)])
 async def create_product(product: ProductCreate):
     """Create a new product"""
     if supabase is None:
@@ -232,7 +246,7 @@ async def create_product(product: ProductCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{product_id}")
+@router.put("/{product_id}", dependencies=[Depends(verify_api_key)])
 async def update_product(product_id: str, updates: dict):
     """Update a product"""
     if supabase is None:
@@ -290,7 +304,7 @@ async def update_product(product_id: str, updates: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", dependencies=[Depends(verify_api_key)])
 async def delete_product(product_id: str):
     """Delete a product"""
     if supabase is None:

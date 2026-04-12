@@ -1,7 +1,7 @@
 """
 Orders & Payments API Routes - Supabase PostgreSQL based
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from typing import List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -17,6 +17,20 @@ from mollie.api.client import Client as MollieClient
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["orders"])
+
+
+# ---- API key dependency ----
+from security import validate_api_key
+
+
+async def verify_api_key(x_api_key: str = Header(None)):
+    """Require a valid X-Api-Key header on write endpoints"""
+    if not x_api_key or not validate_api_key(x_api_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+        )
+    return x_api_key
 
 # Supabase client - will be set by main app
 supabase = None
@@ -183,7 +197,7 @@ def get_api_url():
     return os.environ.get('API_URL', 'https://droomvriendjes.nl')
 
 
-@router.post("/orders")
+@router.post("/orders", dependencies=[Depends(verify_api_key)])
 async def create_order(order: OrderCreate):
     """Create a new order in Supabase"""
     if supabase is None:
