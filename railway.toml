@@ -6,3 +6,13 @@ dockerfilePath = "Dockerfile"
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 30
+
+# Backend (web) service — uses Dockerfile.backend
+# No startCommand override: the Dockerfile CMD is used directly.
+[services.web.build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.backend"
+
+[services.web.deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
