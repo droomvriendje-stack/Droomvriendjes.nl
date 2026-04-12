@@ -172,7 +172,7 @@ async def get_all_products():
         raise HTTPException(status_code=500, detail="Database not configured")
     
     try:
-        result = supabase.table("products").select("*").execute()
+        result = supabase.table("products").select("*").limit(10).execute()
         products = [format_product_response(p) for p in result.data]
         return products
     except Exception as e:
