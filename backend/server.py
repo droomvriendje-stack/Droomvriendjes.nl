@@ -218,6 +218,8 @@ from routes import ai_campaigns as ai_campaigns_route
 from routes import gift_cards_supabase as gift_cards_supabase_route
 from routes import csv_import as csv_import_route
 from routes import email_logs as email_logs_route
+from routes import tracking_meta_capi as tracking_meta_capi_route
+from routes import tracking_tiktok_events as tracking_tiktok_events_route
 
 # Configure routes based on database choice
 if USE_SUPABASE and supabase_client:
@@ -296,6 +298,29 @@ if USE_SUPABASE and supabase_client:
     logger.info("🚀 Using SUPABASE for email logs")
     email_logs_route.set_supabase_client(supabase_client)
     api_router.include_router(email_logs_route.router)
+
+# ============== SERVER-SIDE TRACKING (Meta CAPI + TikTok Events API) ==============
+# Read credentials from environment
+META_ACCESS_TOKEN = os.environ.get("META_ACCESS_TOKEN", "")
+META_PIXEL_ID = os.environ.get("META_PIXEL_ID", "")
+TIKTOK_ACCESS_TOKEN = os.environ.get("TIKTOK_ACCESS_TOKEN", "")
+TIKTOK_BUSINESS_ID = os.environ.get("TIKTOK_BUSINESS_ID", "")
+
+# Meta Conversions API routes
+tracking_meta_capi_route.set_supabase_client(supabase_client)
+api_router.include_router(tracking_meta_capi_route.router)
+if META_ACCESS_TOKEN and META_PIXEL_ID:
+    logger.info(f"✅ Meta CAPI tracking configured (pixel_id={META_PIXEL_ID})")
+else:
+    logger.warning("⚠️ META_ACCESS_TOKEN or META_PIXEL_ID not set — Meta CAPI tracking will return 503")
+
+# TikTok Events API routes
+tracking_tiktok_events_route.set_supabase_client(supabase_client)
+api_router.include_router(tracking_tiktok_events_route.router)
+if TIKTOK_ACCESS_TOKEN and TIKTOK_BUSINESS_ID:
+    logger.info(f"✅ TikTok Events API tracking configured (business_id={TIKTOK_BUSINESS_ID})")
+else:
+    logger.warning("⚠️ TIKTOK_ACCESS_TOKEN or TIKTOK_BUSINESS_ID not set — TikTok tracking will return 503")
 
 # ============== GOOGLE SHOPPING FEED CONSTANTS ==============
 SHOP_URL = os.environ.get('SHOP_URL', 'https://droomvriendjes.nl')
