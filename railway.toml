@@ -1,21 +1,21 @@
-# Frontend (website) service — uses the default Dockerfile (nginx)
+# Frontend (web) service — uses the default Dockerfile (nginx)
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [build.args]
-VITE_API_URL = "https://web-production-3e5df6.up.railway.app"
+VITE_API_URL = "https://api.railway.internal:8000"
 
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 
-# Backend (web) service — uses Dockerfile.backend
+# Backend (api) service — uses Dockerfile.backend
 # No startCommand override: the Dockerfile CMD is used directly.
-[services.web.build]
+[services.api.build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile.backend"
 
-[services.web.deploy]
+[services.api.deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 30
