@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qoykbhocordugtbvpvsl.supabase.co")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+# SUPABASE_KEY is a generic alias accepted from Railway environment variables
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 # Singleton client
 _supabase_client: Optional[Client] = None
@@ -29,10 +31,11 @@ def get_supabase_client() -> Client:
         return _supabase_client
     
     # Use service role key for backend (full access)
-    api_key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
+    # Prefer service key, then generic SUPABASE_KEY, then anon key
+    api_key = SUPABASE_SERVICE_KEY or SUPABASE_KEY or SUPABASE_ANON_KEY
     
     if not api_key:
-        raise ValueError("SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY must be set")
+        raise ValueError("SUPABASE_SERVICE_KEY, SUPABASE_KEY, or SUPABASE_ANON_KEY must be set")
     
     _supabase_client = create_client(SUPABASE_URL, api_key)
     logger.info(f"✅ Supabase connected to: {SUPABASE_URL}")

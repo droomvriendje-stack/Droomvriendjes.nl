@@ -55,14 +55,17 @@ else:
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://qoykbhocordugtbvpvsl.supabase.co")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+# SUPABASE_KEY is a generic alias accepted from Railway environment variables
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 # Supabase is now the ONLY database - MongoDB has been removed
 USE_SUPABASE = True  # Always true
 
 supabase_client: SupabaseClient = None
-if SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY:
+if SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY or SUPABASE_KEY:
     try:
-        api_key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
+        # Prefer service key for full backend access, then anon key, then generic key
+        api_key = SUPABASE_SERVICE_KEY or SUPABASE_KEY or SUPABASE_ANON_KEY
         supabase_client = create_client(SUPABASE_URL, api_key)
         logger.info(f"✅ Supabase connected to: {SUPABASE_URL}")
     except Exception as e:
