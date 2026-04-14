@@ -267,6 +267,7 @@ from routes import csv_import as csv_import_route
 from routes import email_logs as email_logs_route
 from routes import tracking_meta_capi as tracking_meta_capi_route
 from routes import tracking_tiktok_events as tracking_tiktok_events_route
+from routes import admin as admin_route
 
 # Configure routes based on database choice
 if USE_SUPABASE and supabase_client:
@@ -3636,6 +3637,10 @@ async def start_post_purchase_flow(order_id: str):
         return {"status": "flow_started", "order_id": order_id}
     raise HTTPException(status_code=500, detail="Failed to start flow")
 
+
+# Admin authentication routes
+api_router.include_router(admin_route.router)
+logger.info("✅ Admin auth routes registered at /api/admin")
 
 # Include the router in the main app
 app.include_router(api_router)
