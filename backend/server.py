@@ -250,24 +250,24 @@ else:
 api_router = APIRouter(prefix="/api")
 
 # Import and setup modular routes
-from routes import products as products_route
-from routes import products_supabase as products_supabase_route
-from routes import orders_supabase as orders_supabase_route
-from routes import reviews_supabase as reviews_supabase_route
-from routes import email_templates as email_templates_route
-from routes import discount_codes as discount_codes_route
-from routes import reviews as reviews_route
-from routes import uploads as uploads_route
-from routes import marketing as marketing_route
-from routes import database_info as database_info_route
-from routes import dashboard_analytics as dashboard_analytics_route
-from routes import ai_campaigns as ai_campaigns_route
-from routes import gift_cards_supabase as gift_cards_supabase_route
-from routes import csv_import as csv_import_route
-from routes import email_logs as email_logs_route
-from routes import tracking_meta_capi as tracking_meta_capi_route
-from routes import tracking_tiktok_events as tracking_tiktok_events_route
-from routes import admin as admin_route
+from backend.routes import products as products_route
+from backend.routes import products_supabase as products_supabase_route
+from backend.routes import orders_supabase as orders_supabase_route
+from backend.routes import reviews_supabase as reviews_supabase_route
+from backend.routes import email_templates as email_templates_route
+from backend.routes import discount_codes as discount_codes_route
+from backend.routes import reviews as reviews_route
+from backend.routes import uploads as uploads_route
+from backend.routes import marketing as marketing_route
+from backend.routes import database_info as database_info_route
+from backend.routes import dashboard_analytics as dashboard_analytics_route
+from backend.routes import ai_campaigns as ai_campaigns_route
+from backend.routes import gift_cards_supabase as gift_cards_supabase_route
+from backend.routes import csv_import as csv_import_route
+from backend.routes import email_logs as email_logs_route
+from backend.routes import tracking_meta_capi as tracking_meta_capi_route
+from backend.routes import tracking_tiktok_events as tracking_tiktok_events_route
+from backend.routes import admin as admin_route
 
 # Configure routes based on database choice
 if USE_SUPABASE and supabase_client:
