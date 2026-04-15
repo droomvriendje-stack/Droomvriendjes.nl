@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from security import validate_api_key, rate_limiter, SECURITY_HEADERS, CORS_CONFIG
+from backend.security import validate_api_key, rate_limiter, SECURITY_HEADERS, CORS_CONFIG
 from supabase import create_client, Client as SupabaseClient
 import os
 import logging
