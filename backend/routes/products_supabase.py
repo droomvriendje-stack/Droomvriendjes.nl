@@ -19,7 +19,7 @@ supabase = None
 
 
 # ---- API key dependency ----
-from security import validate_api_key
+from backend.security import validate_api_key
 
 
 async def verify_api_key(x_api_key: str = Header(None)):
