@@ -30,15 +30,15 @@ from typing import Optional
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 
-from models.tracking import (
+from backend.models.tracking import (
     MetaPurchaseEvent,
     MetaAddToCartEvent,
     MetaLeadEvent,
     MetaViewContentEvent,
     TrackingEventResponse,
 )
-from utils.tracking_hashing import hash_user_data
-from utils.tracking_deduplication import check_duplicate_event, store_event_id
+from backend.utils.tracking_hashing import hash_user_data
+from backend.utils.tracking_deduplication import check_duplicate_event, store_event_id
 
 logger = logging.getLogger(__name__)
 
