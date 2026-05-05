@@ -58,8 +58,8 @@ SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 # SUPABASE_KEY is a generic alias accepted from Railway environment variables
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
-# Supabase is now the ONLY database - MongoDB has been removed
-USE_SUPABASE = True  # Always true
+# MongoDB is the primary database - Supabase is disabled
+USE_SUPABASE = False  # Use MongoDB for products, orders, and reviews
 
 supabase_client: SupabaseClient = None
 if SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY or SUPABASE_KEY:
