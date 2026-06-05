@@ -1,0 +1,5 @@
+environments:
+  production:
+    serviceName: droomvriendjes-nl
+    domain: droomvriendjescomkinderboeken-production.up.railway.app
+    upstreamUrl: droomvriendjescomkinderboeken.railway.internal:443
